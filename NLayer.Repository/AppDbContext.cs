@@ -13,7 +13,7 @@ namespace NLayer.Repository
     {
 
         // Veri tabanı yolunun startup dosyasından verilebilmesi için gerekli kod parçacığı
-        public AppDbContext(DbContextOptions<DbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
             
         }

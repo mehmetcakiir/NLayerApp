@@ -8,13 +8,13 @@ namespace NLayer.Core.Repositories
         //Premetre olarak verilen id değerine göre
         Task<T> GetByIdAsync(int id);
 
-        IQueryable<T> GetAll(Expression<Func<T, bool>> expression);
+        IQueryable<T> GetAll();
 
         //productList.Where(x=>x.productId > 10). "ordeyBy".toList() denildiği zaman veri tabanına sorgu atılır.
         IQueryable<T> Where(Expression<Func<T, bool>> expression);
 
         //Paremetre olarak gönderilen nesnenin veri tabanında varlığını kontrol eder
-        Task<bool> AntAsycn(T entity);
+        Task<bool> AnyAsycn(Expression<Func<T, bool>> expression);
 
         //Tek kayıt eklenir
         Task AddAsycn(T entity);

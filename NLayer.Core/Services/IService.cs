@@ -12,19 +12,19 @@ namespace NLayer.Core.Services
         //Premetre olarak verilen id değerine göre
         Task<T> GetByIdAsync(int id);
 
-        Task<IEnumerable<T>> GetAll();
+        Task<IEnumerable<T>> GetAllAsycn();
 
         //productList.Where(x=>x.productId > 10). "ordeyBy".toList() denildiği zaman veri tabanına sorgu atılır.
         IQueryable<T> Where(Expression<Func<T, bool>> expression);
 
         //Paremetre olarak gönderilen nesnenin veri tabanında varlığını kontrol eder
-        Task<bool> AntAsycn(T entity);
+        Task<bool> AnyAsycn(Expression<Func<T, bool>> expression);
 
         //Tek kayıt eklenir
-        Task AddAsycn(T entity);
+        Task<T> AddAsycn(T entity);
 
         //Birden fazla kayıt eklenir
-        Task AddRangeAsycn(IEnumerable<T> entities);
+        Task<IEnumerable<T>> AddRangeAsycn(IEnumerable<T> entities);
 
         Task Update(T entity);
 
