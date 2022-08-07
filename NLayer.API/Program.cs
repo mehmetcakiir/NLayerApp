@@ -10,12 +10,24 @@ using NLayer.Service.Services;
 using NLayer.Service.Mapping;
 using FluentValidation.AspNetCore;
 using NLayer.Service.Validations;
+using NLayer.API.Filters;
+using Microsoft.AspNetCore.Mvc;
+using NLayer.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+//Filter larý kullan
+builder.Services.AddControllers(options => options.Filters.Add(new ValidateFilterAttribute())).AddFluentValidation(x =>
+x.RegisterValidatorsFromAssemblyContaining<ProductDtoValidator>());
 
-builder.Services.AddControllers().AddFluentValidation(x => x.RegisterValidatorsFromAssemblyContaining<ProductDtoValidator>());
+
+//Fremwork ün kendi response unu baskýlar (Kendi filter ýmýzýn aktif hale gelebilmesi için kullanýldý)
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -53,6 +65,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCustomExeption();
+
+
+//Yazýlan Middleware i görmesi için
 app.UseAuthorization();
 
 app.MapControllers();
