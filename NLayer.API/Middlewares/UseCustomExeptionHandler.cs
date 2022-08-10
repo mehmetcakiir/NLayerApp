@@ -30,6 +30,9 @@ namespace NLayer.API.Middlewares
                         //Hata Client kaynaklı ise 400
                         ClientSideException => 400,
 
+                        //404 hatası için oluşturuldu
+                        NotFountException => 404,
+
                         //Değil ise 500 ata
                         _ => 500
 
