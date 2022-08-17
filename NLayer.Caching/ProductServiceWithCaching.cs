@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using NLayer.Core;
 using NLayer.Core.DTOs;
 using NLayer.Core.Repositories;
 using NLayer.Core.Services;
 using NLayer.Core.UnitOfWorks;
+using NLayer.Service.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,19 +40,32 @@ namespace NLayer.Caching
             if (!_memortCache.TryGetValue(CacheProductKey, out _))
             {
                 //Tüm datayı al
-                _memortCache.Set(CacheProductKey, _repository.GetAll().ToList());
+                _memortCache.Set(CacheProductKey, _repository.GetProductWithCatagory());
             }
         }
 
 
-        public Task<Product> AddAsycn(Product entity)
+        public async Task<Product> AddAsycn(Product entity)
         {
-            throw new NotImplementedException();
+            //Öncelikle db ye eklenir
+            await _repository.AddAsycn(entity);
+
+            //Veri tabanına kaydedilip yansıtılır.
+            await _unitOfWork.CommitAsycn();
+
+            //Verileri cache tekrar çeker
+            await CashAllProductsAsync();
+            return entity;
         }
 
-        public Task<IEnumerable<Product>> AddRangeAsycn(IEnumerable<Product> entities)
+        public async Task<IEnumerable<Product>> AddRangeAsycn(IEnumerable<Product> entities)
         {
-            throw new NotImplementedException();
+            await _repository.AddRangeAsycn(entities);
+
+            await _unitOfWork.CommitAsycn();
+
+            await CashAllProductsAsync();
+            return entities;
         }
 
         public Task<bool> AnyAsycn(Expression<Func<Product, bool>> expression)
@@ -60,37 +75,63 @@ namespace NLayer.Caching
 
         public Task<IEnumerable<Product>> GetAllAsycn()
         {
-            throw new NotImplementedException();
+           return Task.FromResult(_memortCache.Get<IEnumerable<Product>>(CacheProductKey));
         }
 
         public Task<Product> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var product = _memortCache.Get<List<Product>>(CacheProductKey).FirstOrDefault(x => x.Id == id);
+
+            if (product == null)
+            {
+                throw new NotFountException($"{typeof(Product).Name} ({id}) not fount");
+            }
+
+            return Task.FromResult(product);
         }
 
         public Task<CustomResponseDto<List<ProductWithCategoryDto>>> GetProductWithCatagory()
         {
-            throw new NotImplementedException();
+            var product = _memortCache.Get<IEnumerable<Product>>(CacheProductKey);
+
+            var productWithCategoryDto = _mapper.Map<List<ProductWithCategoryDto>>(product);
+
+            return Task.FromResult(CustomResponseDto<List<ProductWithCategoryDto>>.Succes(200, productWithCategoryDto));
         }
 
-        public Task Remove(Product entity)
+        public async Task Remove(Product entity)
         {
-            throw new NotImplementedException();
+             _repository.Remove(entity);
+            await _unitOfWork.CommitAsycn();
+            await CashAllProductsAsync();
         }
 
-        public Task RemoveRange(IEnumerable<Product> entities)
+        public async Task RemoveRange(IEnumerable<Product> entities)
         {
-            throw new NotImplementedException();
+            _repository.RemoveRange(entities);
+            await _unitOfWork.CommitAsycn();
+            await CashAllProductsAsync();
+
         }
 
-        public Task Update(Product entity)
+        public async Task Update(Product entity)
         {
-            throw new NotImplementedException();
+            _repository.Update(entity);
+            await _unitOfWork.CommitAsycn();
+            await CashAllProductsAsync();
         }
 
         public IQueryable<Product> Where(Expression<Func<Product, bool>> expression)
         {
-            throw new NotImplementedException();
+            return _memortCache.Get<List<Product>>(CacheProductKey).Where(expression.Compile()).AsQueryable();
+        }
+
+
+
+        public async Task CashAllProductsAsync()
+        {
+            //Chach e tüm verileri çeker
+            _memortCache.Set(CacheProductKey, await _repository.GetAll().ToListAsync());
         }
     }
 }
