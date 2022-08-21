@@ -39,8 +39,8 @@ namespace NLayer.Caching
             // Uygulama ilk ayağa kalktığında Key e sahip data yok ise
             if (!_memortCache.TryGetValue(CacheProductKey, out _))
             {
-                //Tüm datayı al
-                _memortCache.Set(CacheProductKey, _repository.GetProductWithCatagory());
+                //Tüm datayı al !(constructor da asekron olamayacağı için Result ekleyerek senkron hale getirildi.)
+                _memortCache.Set(CacheProductKey, _repository.GetProductWithCatagory().Result);
             }
         }
 
